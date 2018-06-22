@@ -466,18 +466,18 @@ function Msg( $Message, $EOL = PHP_EOL )
 			'{grey}',
 		],
 		[
-			"\033[0m",
-			"\033[0;32m",
-			"\033[1;33m",
-			"\033[1;31m",
-			"\033[1;34m",
-			"\033[0;36m",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
 		],
 	$Message, $Count );
 
 	if( $Count > 0 )
 	{
-		$Message .= "\033[0m";
+		$Message .= "";
 	}
 
 	echo '[' . date( 'H:i:s' ) . '] ' . $Message . $EOL;
