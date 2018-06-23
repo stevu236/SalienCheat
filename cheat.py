@@ -99,6 +99,10 @@ class Saliens(requests.Session):
 
                 if resp.status_code != 200:
                     raise Exception("HTTP %s" % resp.status_code)
+
+                if 'X-eresult' in resp.headers:
+                    self.LOG.debug('EResult: %s', resp.headers['X-eresult'])
+
                 rdata = resp.json()
                 if 'response' not in rdata:
                     raise Exception("No response is json")
@@ -194,10 +198,20 @@ class Saliens(requests.Session):
                                           reverse=True,
                                           key=lambda x: x['zone_position'])
 
-            planet['sort_key'] = (len(planet['easy_zones'])
-                                  + 100 * len(planet['medium_zones'])
-                                  + 10000 * len(planet['hard_zones'])
-                                  )
+            # Example ordering (easy/med/hard):
+            # 20/5/1 > 20/5/5 > 20/1/0 > 1/20/0
+            # This should result in prefering planets that are nearing completion, but
+            # still prioritize ones that have high difficulty zone to maximize score gain
+            sort_key = 0
+
+            if len(planet['easy_zones']):
+                sort_key += 99 - len(planet['easy_zones'])
+            if len(planet['medium_zones']):
+                sort_key += 100 * (99 - len(planet['medium_zones']))
+            if len(planet['hard_zones']):
+                sort_key += 10000 * (99 - len(planet['hard_zones']))
+
+            planet['sort_key'] = sort_key
 
         return planet
 
@@ -355,6 +369,7 @@ game.log("Getting player info...")
 game.represent_clan(4777282)
 game.log("Scanning for planets...")
 game.refresh_player_info()
+game.refresh_planet_info()
 planets = game.get_uncaptured_planets()
 
 # join battle
@@ -384,7 +399,6 @@ try:
             game.log("Remaining on current planet")
 
         game.refresh_planet_info()
-        deadline = time() + 60 * 30  # 30minutes recheck
 
         planet_id = game.planet['id']
         planet_name = game.planet['state']['name']
@@ -410,6 +424,7 @@ try:
 
             zone_id = zones[0]['zone_position']
             difficulty = zones[0]['difficulty']
+            deadline = time() + 60 * 10  # rescan planets every 10min
 
             dmap = {
                 1: 'easy',
@@ -420,6 +435,7 @@ try:
             game.log("Selecting zone %s (%s)....", zone_id, dmap.get(difficulty, difficulty))
 
             while (game.planet
+                   and time() < deadline
                    and not game.planet['zones'][zone_id]['captured']
                    and game.planet['zones'][zone_id]['capture_progress'] < 0.95):
 

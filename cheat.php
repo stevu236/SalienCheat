@@ -78,10 +78,10 @@ do
 {
 	echo PHP_EOL;
 
-	// Check for a new planet every hour
-	if( time() - $LastRestart > 3600 )
+	// Scan planets every 10 minutes
+	if( time() - $LastRestart > 60 * 10 )
 	{
-		Msg( '{lightred}!! Idled this planet for one hour, restarting to check for new planets' );
+		Msg( '{lightred}!! Restarting to re-scan for new planets...' );
 
 		goto lol_using_goto_in_2018;
 	}
@@ -187,6 +187,11 @@ do
 			'{normal} XP - Remaining: {yellow}' . number_format( $Data[ 'next_level_score' ] - $Data[ 'new_score' ] ) .
 			'{normal} XP - ETA: {green}' . $Hours . 'h ' . $Minutes . 'm'
 		);
+	}
+	else
+	{
+		// If ReportScore failed (e.g. zone got captured), rescan planets
+		goto lol_using_goto_in_2018;
 	}
 
 	// Some users get stuck in games after calling ReportScore, so we manually leave to fix this
@@ -413,8 +418,8 @@ function GetFirstAvailablePlanet( $SkippedPlanets, &$KnownPlanets )
 				return $b[ 'state' ][ 'capture_progress' ] - $a[ 'state' ][ 'capture_progress' ];
 		}
 		
-			// If the hard zones are equal, sort by most medium zones
-			return $b[ 'medium_zones' ] - $a[ 'medium_zones' ];
+			// If the hard zones are equal, sort by least medium zones
+			return $a[ 'medium_zones' ] - $b[ 'medium_zones' ];
 		}
 		
 		// Sort planets by least amount of hard zones
@@ -499,8 +504,8 @@ function SendPOST( $Method, $Data )
 		CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3464.0 Safari/537.36',
 		CURLOPT_RETURNTRANSFER => true,
 		CURLOPT_ENCODING       => 'gzip',
-		CURLOPT_TIMEOUT        => 15,
-		CURLOPT_CONNECTTIMEOUT => 15,
+		CURLOPT_TIMEOUT        => 60,
+		CURLOPT_CONNECTTIMEOUT => 10,
 		CURLOPT_HEADER         => 1,
 		CURLOPT_POST           => 1,
 		CURLOPT_POSTFIELDS     => $Data,
