@@ -1065,7 +1065,7 @@ function Msg( $Message, $EOL = PHP_EOL, $printf = [] )
 			"",
 			"",
 			"",
-			"\033[37;44m",
+			"",
 		],
 	$Message, $Count );
 
